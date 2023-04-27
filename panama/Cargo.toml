@@ -1,0 +1,14 @@
+[build-dependencies]
+cbindgen = "0.24.3"
+
+[package]
+name = "detection-panama"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+whichlicense_detection = "0.1.0"
+gaoya = "0.1.2"
