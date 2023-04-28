@@ -28,20 +28,12 @@ jobs:
       matrix:
         target:
           - x86_64-unknown-linux-gnu
-          - aarch64-unknown-linux-gnu
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          target: ${{ matrix.target }}
-          override: true
-      - uses: actions-rs/cargo@v1
-        with:
-          use-cross: true
-          command: build
-          args: --release --target=${{ matrix.target }}
+      - name: Build lib for ${{ matrix.target }}
+        run: cargo build --release
+        working-directory: panama
       - name: Rename x86_64 linux lib
         if: contains(matrix.target, 'x86_64-unknown-linux-gnu')
         run: mv ./target/release/libidentification_panama.so ./libidentification-linux-amd64.so
@@ -50,7 +42,7 @@ jobs:
         if: contains(matrix.target, 'aarch64-unknown-linux-gnu')
         run: mv ./target/release/libidentification_panama.so ./libidentification-linux-aarch64.so
         working-directory: panama
-      - name: Upload binary artifact
+      - name: Upload lib artifact
         uses: actions/upload-artifact@v3
         with:
           name: release-${{ github.sha }}
@@ -64,7 +56,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: release
     steps:
-      - name: Download binary artifacts
+      - name: Download lib artifacts
         uses: actions/download-artifact@v3
         with:
           name: release-${{ github.sha }}
