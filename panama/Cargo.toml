@@ -2,7 +2,7 @@
 cbindgen = "0.24.3"
 
 [package]
-name = "detection-panama"
+name = "identification-panama"
 version = "0.1.0"
 edition = "2021"
 
