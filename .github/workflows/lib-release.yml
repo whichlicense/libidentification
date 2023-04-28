@@ -86,7 +86,7 @@ jobs:
           if-no-files-found: error
           retention-days: 1
   release:
-    needs: [ compile ]
+    needs: [ compile, transpile ]
     runs-on: ubuntu-latest
     environment: release
     steps:
