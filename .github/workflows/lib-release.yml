@@ -21,7 +21,7 @@ permissions:
   contents: write
 
 jobs:
-  build:
+  compile:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     strategy:
       fail-fast: false
@@ -40,7 +40,7 @@ jobs:
         run: mv ./target/release/libidentification_panama.so ./libidentification-linux-amd64.so
       - name: Rename Windows lib
         if: contains(matrix.os, 'windows')
-        run: mv ./target/release/libidentification_panama.dll ./libidentification-windows-amd64.dll
+        run: ls ./target/release
       - name: Rename macOS lib
         if: contains(matrix.os, 'macos')
         run: mv ./target/release/libidentification_panama.dylib ./libidentification-darwin-amd64.dylib
@@ -55,7 +55,7 @@ jobs:
           if-no-files-found: error
           retention-days: 1
   release:
-    needs: [ build ]
+    needs: [ compile ]
     runs-on: ubuntu-latest
     environment: release
     steps:
