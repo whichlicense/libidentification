@@ -40,7 +40,7 @@ jobs:
         run: mv ./target/release/libidentification_panama.so ./libidentification-linux-amd64.so
       - name: Rename Windows lib
         if: contains(matrix.os, 'windows')
-        run: ls ./target/release/identification_panama.dll ./libidentification-windows-amd64.dll
+        run: mv ./target/release/identification_panama.dll ./libidentification-windows-amd64.dll
       - name: Rename macOS lib
         if: contains(matrix.os, 'macos')
         run: mv ./target/release/libidentification_panama.dylib ./libidentification-darwin-amd64.dylib
