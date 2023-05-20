@@ -17,6 +17,7 @@
 
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
+use std::ptr;
 use std::string::ToString;
 
 use gaoya::minhash::{MinHasher32, MinHashIndex};
@@ -40,9 +41,27 @@ fn rustic_string(ptr: *const c_char, msg: &str) -> &str {
     unsafe { CStr::from_ptr(ptr) }.to_str().expect(msg)
 }
 
+#[repr(C)]
+pub struct LicenseMatch {
+    pub name: *const c_char,
+    pub confidence: f32,
+}
+
+#[repr(C)]
+pub struct LicenseMatches {
+    pub matches: *const LicenseMatch,
+    pub length: usize,
+}
+
 #[inline(always)]
 fn c_string(str: String, msg: &str) -> *const c_char {
     CString::new(str).expect(msg).into_raw()
+}
+
+#[inline(always)]
+fn c_box<T>(rustic_box: Box<[T]>) -> *const T {
+    if rustic_box.is_empty() { return ptr::null(); }
+    Box::into_raw(rustic_box) as *const T
 }
 
 #[repr(C)]
@@ -84,33 +103,46 @@ pub extern "C" fn fuzzy_compute_hash<'jvm>(config: &'jvm FuzzyHashingConfig, lic
 }
 
 #[no_mangle]
-pub extern "C" fn fuzzy_detect_license_default_normalization<'jvm>(config: &'jvm FuzzyHashingConfig, license: &'jvm c_char) -> *const c_char {
+pub extern "C" fn fuzzy_detect_license_default_normalization<'jvm>(config: &'jvm FuzzyHashingConfig, license: &'jvm c_char) -> LicenseMatches {
     let mut fuzzy = configure_fuzzy_detection(config, DEFAULT_NORMALIZATION_FN);
 
     let licenses = rustic_string(config.licenses_json, "failed to obtain the license index");
     fuzzy.load_from_inline_string(licenses);
 
     let raw_license = rustic_string(license, "failed to obtain the license text");
-    let matches = fuzzy.match_by_plain_text(raw_license).iter()
-        .map(|m| format!("{}: {}", m.name, m.confidence))
-        .collect::<Vec<String>>().join(";");
+    let matches = fuzzy.match_by_plain_text(raw_license).iter().map(|m| {
+        LicenseMatch {
+            name: c_string(m.name.clone(), "failed to clone the license name"),
+            confidence: m.confidence,
+        }
+    }).collect::<Box<[LicenseMatch]>>();
 
-    c_string(matches, "failed to convert the matches into a CString")
+    LicenseMatches {
+        length: matches.len(),
+        matches: c_box(matches),
+    }
 }
 
 #[no_mangle]
-pub extern "C" fn fuzzy_detect_license<'jvm>(config: &'jvm FuzzyHashingConfig, license: &'jvm c_char) -> *const c_char {
+pub extern "C" fn fuzzy_detect_license<'jvm>(config: &'jvm FuzzyHashingConfig, license: &'jvm c_char) -> LicenseMatches {
     let mut fuzzy = configure_fuzzy_detection(config, SKIP_NORMALIZATION_FN);
 
     let licenses = rustic_string(config.licenses_json, "failed to obtain the license index");
     fuzzy.load_from_inline_string(licenses);
 
     let raw_license = rustic_string(license, "failed to obtain the license text");
-    let matches = fuzzy.match_by_plain_text(rustic_normalize(config.normalization_fn, raw_license)).iter()
-        .map(|m| format!("{}: {}", m.name, m.confidence))
-        .collect::<Vec<String>>().join(";");
+    let normalized_license = rustic_normalize(config.normalization_fn, raw_license);
+    let matches = fuzzy.match_by_plain_text(normalized_license).iter().map(|m| {
+        LicenseMatch {
+            name: c_string(m.name.clone(), "failed to clone the license name"),
+            confidence: m.confidence,
+        }
+    }).collect::<Box<[LicenseMatch]>>();
 
-    c_string(matches, "failed to convert the matches into a CString")
+    LicenseMatches {
+        length: matches.len(),
+        matches: c_box(matches),
+    }
 }
 
 #[repr(C)]
@@ -155,33 +187,46 @@ pub extern "C" fn gaoya_compute_hash<'jvm>(config: &'jvm GaoyaHashingConfig, lic
 }
 
 #[no_mangle]
-pub extern "C" fn gaoya_detect_license_default_normalization<'jvm>(config: &'jvm GaoyaHashingConfig, license: &'jvm c_char) -> *const c_char {
+pub extern "C" fn gaoya_detect_license_default_normalization<'jvm>(config: &'jvm GaoyaHashingConfig, license: &'jvm c_char) -> LicenseMatches {
     let mut gaoya = configure_gaoya_detection(config, DEFAULT_NORMALIZATION_FN);
 
     let licenses = rustic_string(config.licenses_json, "failed to obtain the license index");
     gaoya.load_from_inline_string(licenses);
 
     let raw_license = rustic_string(license, "failed to obtain the license text");
-    let matches = gaoya.match_by_plain_text(raw_license).iter()
-        .map(|m| format!("{}: {}", m.name, m.confidence))
-        .collect::<Vec<String>>().join(";");
+    let matches = gaoya.match_by_plain_text(raw_license).iter().map(|m| {
+        LicenseMatch {
+            name: c_string(m.name.clone(), "failed to clone the license name"),
+            confidence: m.confidence,
+        }
+    }).collect::<Box<[LicenseMatch]>>();
 
-    c_string(matches, "failed to convert the matches into a CString")
+    LicenseMatches {
+        length: matches.len(),
+        matches: c_box(matches),
+    }
 }
 
 #[no_mangle]
-pub extern "C" fn gaoya_detect_license<'jvm>(config: &'jvm GaoyaHashingConfig, license: &'jvm c_char) -> *const c_char {
+pub extern "C" fn gaoya_detect_license<'jvm>(config: &'jvm GaoyaHashingConfig, license: &'jvm c_char) -> LicenseMatches {
     let mut gaoya = configure_gaoya_detection(config, SKIP_NORMALIZATION_FN);
 
     let licenses = rustic_string(config.licenses_json, "failed to obtain the license index");
     gaoya.load_from_inline_string(licenses);
 
     let raw_license = rustic_string(license, "failed to obtain the license text");
-    let matches = gaoya.match_by_plain_text(rustic_normalize(config.normalization_fn, raw_license)).iter()
-        .map(|m| format!("{}: {}", m.name, m.confidence))
-        .collect::<Vec<String>>().join(";");
+    let normalized_license = rustic_normalize(config.normalization_fn, raw_license);
+    let matches = gaoya.match_by_plain_text(normalized_license).iter().map(|m| {
+        LicenseMatch {
+            name: c_string(m.name.clone(), "failed to clone the license name"),
+            confidence: m.confidence,
+        }
+    }).collect::<Box<[LicenseMatch]>>();
 
-    c_string(matches, "failed to convert the matches into a CString")
+    LicenseMatches {
+        length: matches.len(),
+        matches: c_box(matches),
+    }
 }
 
 /*#[repr(C)]

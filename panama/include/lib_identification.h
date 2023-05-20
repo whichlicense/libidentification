@@ -12,6 +12,16 @@ typedef struct FuzzyHashingConfig {
   CNormalizationFn normalization_fn;
 } FuzzyHashingConfig;
 
+typedef struct LicenseMatch {
+  const char *name;
+  float confidence;
+} LicenseMatch;
+
+typedef struct LicenseMatches {
+  const struct LicenseMatch *matches;
+  uintptr_t length;
+} LicenseMatches;
+
 typedef struct GaoyaHashingConfig {
   const char *licenses_json;
   uintptr_t band_count;
@@ -25,17 +35,19 @@ const char *fuzzy_compute_hash_default_normalization(const struct FuzzyHashingCo
 
 const char *fuzzy_compute_hash(const struct FuzzyHashingConfig *config, const char *license);
 
-const char *fuzzy_detect_license_default_normalization(const struct FuzzyHashingConfig *config,
-                                                       const char *license);
+struct LicenseMatches fuzzy_detect_license_default_normalization(const struct FuzzyHashingConfig *config,
+                                                                 const char *license);
 
-const char *fuzzy_detect_license(const struct FuzzyHashingConfig *config, const char *license);
+struct LicenseMatches fuzzy_detect_license(const struct FuzzyHashingConfig *config,
+                                           const char *license);
 
 const char *gaoya_compute_hash_default_normalization(const struct GaoyaHashingConfig *config,
                                                      const char *license);
 
 const char *gaoya_compute_hash(const struct GaoyaHashingConfig *config, const char *license);
 
-const char *gaoya_detect_license_default_normalization(const struct GaoyaHashingConfig *config,
-                                                       const char *license);
+struct LicenseMatches gaoya_detect_license_default_normalization(const struct GaoyaHashingConfig *config,
+                                                                 const char *license);
 
-const char *gaoya_detect_license(const struct GaoyaHashingConfig *config, const char *license);
+struct LicenseMatches gaoya_detect_license(const struct GaoyaHashingConfig *config,
+                                           const char *license);
