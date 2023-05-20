@@ -67,6 +67,7 @@ fn c_box<T>(rustic_box: Box<[T]>) -> *const T {
 
 #[inline(always)]
 fn rustic_vec<T>(ptr: *const T, size: usize) -> Vec<T> where T: Clone {
+    if size == 0 { return Vec::new(); }
     unsafe { slice::from_raw_parts(ptr, size) }.to_vec()
 }
 

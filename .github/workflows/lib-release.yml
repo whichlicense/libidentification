@@ -34,7 +34,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Build lib on ${{ matrix.os }}
-        run: cargo build --release
+        run: cargo build --profile release-lto
       - name: Rename linux lib
         if: contains(matrix.os, 'ubuntu')
         run: mv ./target/release/libidentification_panama.so ./libidentification-linux-amd64.so
