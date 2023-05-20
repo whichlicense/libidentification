@@ -12,13 +12,13 @@ typedef struct FuzzyHashingConfig {
   CNormalizationFn normalization_fn;
 } FuzzyHashingConfig;
 
-typedef struct LicenseMatch {
+typedef struct LicenseMatchEntry {
   const char *name;
   float confidence;
-} LicenseMatch;
+} LicenseMatchEntry;
 
 typedef struct LicenseMatches {
-  const struct LicenseMatch *matches;
+  const struct LicenseMatchEntry *matches;
   uintptr_t length;
 } LicenseMatches;
 

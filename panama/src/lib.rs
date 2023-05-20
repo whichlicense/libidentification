@@ -42,14 +42,14 @@ fn rustic_string(ptr: *const c_char, msg: &str) -> &str {
 }
 
 #[repr(C)]
-pub struct LicenseMatch {
+pub struct LicenseMatchEntry {
     pub name: *const c_char,
     pub confidence: f32,
 }
 
 #[repr(C)]
 pub struct LicenseMatches {
-    pub matches: *const LicenseMatch,
+    pub matches: *const LicenseMatchEntry,
     pub length: usize,
 }
 
@@ -67,6 +67,7 @@ fn c_box<T>(rustic_box: Box<[T]>) -> *const T {
 #[repr(C)]
 pub struct FuzzyHashingConfig {
     licenses_json: *const c_char,
+    max_license_count: usize,
     confidence_threshold: u8,
     exit_on_exact_match: bool,
     normalization_fn: CNormalizationFn,
@@ -111,11 +112,11 @@ pub extern "C" fn fuzzy_detect_license_default_normalization<'jvm>(config: &'jvm
 
     let raw_license = rustic_string(license, "failed to obtain the license text");
     let matches = fuzzy.match_by_plain_text(raw_license).iter().map(|m| {
-        LicenseMatch {
+        LicenseMatchEntry {
             name: c_string(m.name.clone(), "failed to clone the license name"),
             confidence: m.confidence,
         }
-    }).collect::<Box<[LicenseMatch]>>();
+    }).collect::<Box<[LicenseMatchEntry]>>();
 
     LicenseMatches {
         length: matches.len(),
@@ -133,11 +134,11 @@ pub extern "C" fn fuzzy_detect_license<'jvm>(config: &'jvm FuzzyHashingConfig, l
     let raw_license = rustic_string(license, "failed to obtain the license text");
     let normalized_license = rustic_normalize(config.normalization_fn, raw_license);
     let matches = fuzzy.match_by_plain_text(normalized_license).iter().map(|m| {
-        LicenseMatch {
+        LicenseMatchEntry {
             name: c_string(m.name.clone(), "failed to clone the license name"),
             confidence: m.confidence,
         }
-    }).collect::<Box<[LicenseMatch]>>();
+    }).collect::<Box<[LicenseMatchEntry]>>();
 
     LicenseMatches {
         length: matches.len(),
@@ -148,6 +149,7 @@ pub extern "C" fn fuzzy_detect_license<'jvm>(config: &'jvm FuzzyHashingConfig, l
 #[repr(C)]
 pub struct GaoyaHashingConfig {
     licenses_json: *const c_char,
+    max_license_count: usize,
     band_count: usize,
     band_width: usize,
     shingle_size: usize,
@@ -195,11 +197,11 @@ pub extern "C" fn gaoya_detect_license_default_normalization<'jvm>(config: &'jvm
 
     let raw_license = rustic_string(license, "failed to obtain the license text");
     let matches = gaoya.match_by_plain_text(raw_license).iter().map(|m| {
-        LicenseMatch {
+        LicenseMatchEntry {
             name: c_string(m.name.clone(), "failed to clone the license name"),
             confidence: m.confidence,
         }
-    }).collect::<Box<[LicenseMatch]>>();
+    }).collect::<Box<[LicenseMatchEntry]>>();
 
     LicenseMatches {
         length: matches.len(),
@@ -217,11 +219,11 @@ pub extern "C" fn gaoya_detect_license<'jvm>(config: &'jvm GaoyaHashingConfig, l
     let raw_license = rustic_string(license, "failed to obtain the license text");
     let normalized_license = rustic_normalize(config.normalization_fn, raw_license);
     let matches = gaoya.match_by_plain_text(normalized_license).iter().map(|m| {
-        LicenseMatch {
+        LicenseMatchEntry {
             name: c_string(m.name.clone(), "failed to clone the license name"),
             confidence: m.confidence,
         }
-    }).collect::<Box<[LicenseMatch]>>();
+    }).collect::<Box<[LicenseMatchEntry]>>();
 
     LicenseMatches {
         length: matches.len(),
