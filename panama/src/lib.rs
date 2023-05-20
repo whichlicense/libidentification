@@ -18,6 +18,7 @@
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 use std::ptr;
+use std::slice;
 use std::string::ToString;
 
 use gaoya::minhash::{MinHasher32, MinHashIndex};
@@ -64,9 +65,15 @@ fn c_box<T>(rustic_box: Box<[T]>) -> *const T {
     Box::into_raw(rustic_box) as *const T
 }
 
+#[inline(always)]
+fn rustic_vec<T>(ptr: *const T, size: usize) -> Vec<T> where T: Clone {
+    unsafe { slice::from_raw_parts(ptr, size) }.to_vec()
+}
+
 #[repr(C)]
 pub struct FuzzyHashingConfig {
-    licenses_json: *const c_char,
+    license_index: *const u8,
+    license_index_size: usize,
     max_license_count: usize,
     confidence_threshold: u8,
     exit_on_exact_match: bool,
@@ -106,9 +113,7 @@ pub extern "C" fn fuzzy_compute_hash<'jvm>(config: &'jvm FuzzyHashingConfig, lic
 #[no_mangle]
 pub extern "C" fn fuzzy_detect_license_default_normalization<'jvm>(config: &'jvm FuzzyHashingConfig, license: &'jvm c_char) -> LicenseMatches {
     let mut fuzzy = configure_fuzzy_detection(config, DEFAULT_NORMALIZATION_FN);
-
-    let licenses = rustic_string(config.licenses_json, "failed to obtain the license index");
-    fuzzy.load_from_inline_string(licenses);
+    fuzzy.load_from_memory(rustic_vec(config.license_index, config.license_index_size));
 
     let raw_license = rustic_string(license, "failed to obtain the license text");
     let matches = fuzzy.match_by_plain_text(raw_license).iter().map(|m| {
@@ -127,9 +132,7 @@ pub extern "C" fn fuzzy_detect_license_default_normalization<'jvm>(config: &'jvm
 #[no_mangle]
 pub extern "C" fn fuzzy_detect_license<'jvm>(config: &'jvm FuzzyHashingConfig, license: &'jvm c_char) -> LicenseMatches {
     let mut fuzzy = configure_fuzzy_detection(config, SKIP_NORMALIZATION_FN);
-
-    let licenses = rustic_string(config.licenses_json, "failed to obtain the license index");
-    fuzzy.load_from_inline_string(licenses);
+    fuzzy.load_from_memory(rustic_vec(config.license_index, config.license_index_size));
 
     let raw_license = rustic_string(license, "failed to obtain the license text");
     let normalized_license = rustic_normalize(config.normalization_fn, raw_license);
@@ -148,7 +151,8 @@ pub extern "C" fn fuzzy_detect_license<'jvm>(config: &'jvm FuzzyHashingConfig, l
 
 #[repr(C)]
 pub struct GaoyaHashingConfig {
-    licenses_json: *const c_char,
+    license_index: *const u8,
+    license_index_size: usize,
     max_license_count: usize,
     band_count: usize,
     band_width: usize,
@@ -191,9 +195,7 @@ pub extern "C" fn gaoya_compute_hash<'jvm>(config: &'jvm GaoyaHashingConfig, lic
 #[no_mangle]
 pub extern "C" fn gaoya_detect_license_default_normalization<'jvm>(config: &'jvm GaoyaHashingConfig, license: &'jvm c_char) -> LicenseMatches {
     let mut gaoya = configure_gaoya_detection(config, DEFAULT_NORMALIZATION_FN);
-
-    let licenses = rustic_string(config.licenses_json, "failed to obtain the license index");
-    gaoya.load_from_inline_string(licenses);
+    gaoya.load_from_memory(rustic_vec(config.license_index, config.license_index_size));
 
     let raw_license = rustic_string(license, "failed to obtain the license text");
     let matches = gaoya.match_by_plain_text(raw_license).iter().map(|m| {
@@ -212,9 +214,7 @@ pub extern "C" fn gaoya_detect_license_default_normalization<'jvm>(config: &'jvm
 #[no_mangle]
 pub extern "C" fn gaoya_detect_license<'jvm>(config: &'jvm GaoyaHashingConfig, license: &'jvm c_char) -> LicenseMatches {
     let mut gaoya = configure_gaoya_detection(config, SKIP_NORMALIZATION_FN);
-
-    let licenses = rustic_string(config.licenses_json, "failed to obtain the license index");
-    gaoya.load_from_inline_string(licenses);
+    gaoya.load_from_memory(rustic_vec(config.license_index, config.license_index_size));
 
     let raw_license = rustic_string(license, "failed to obtain the license text");
     let normalized_license = rustic_normalize(config.normalization_fn, raw_license);
