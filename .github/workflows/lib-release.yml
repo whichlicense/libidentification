@@ -37,13 +37,13 @@ jobs:
         run: cargo build --profile release-lto
       - name: Rename linux lib
         if: contains(matrix.os, 'ubuntu')
-        run: mv ./target/release/libidentification_panama.so ./libidentification-linux-amd64.so
+        run: mv ./target/release-lto/libidentification_panama.so ./libidentification-linux-amd64.so
       - name: Rename Windows lib
         if: contains(matrix.os, 'windows')
-        run: mv ./target/release/identification_panama.dll ./libidentification-windows-amd64.dll
+        run: mv ./target/release-lto/identification_panama.dll ./libidentification-windows-amd64.dll
       - name: Rename macOS lib
         if: contains(matrix.os, 'macos')
-        run: mv ./target/release/libidentification_panama.dylib ./libidentification-darwin-amd64.dylib
+        run: mv ./target/release-lto/libidentification_panama.dylib ./libidentification-darwin-amd64.dylib
       - name: Upload lib artifact
         uses: actions/upload-artifact@v3
         with:
