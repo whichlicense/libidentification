@@ -7,6 +7,7 @@ typedef const char *(*CNormalizationFn)(const char*);
 
 typedef struct FuzzyHashingConfig {
   const char *licenses_json;
+  uintptr_t max_license_count;
   uint8_t confidence_threshold;
   bool exit_on_exact_match;
   CNormalizationFn normalization_fn;
@@ -24,6 +25,7 @@ typedef struct LicenseMatches {
 
 typedef struct GaoyaHashingConfig {
   const char *licenses_json;
+  uintptr_t max_license_count;
   uintptr_t band_count;
   uintptr_t band_width;
   uintptr_t shingle_size;
