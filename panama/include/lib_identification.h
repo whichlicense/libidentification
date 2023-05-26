@@ -3,6 +3,17 @@
 #include <stdint.h>
 //#include <stdlib.h>
 
+typedef enum PipelineStepArgumentKind {
+  TEXT,
+  REGEX,
+} PipelineStepArgumentKind;
+
+typedef enum PipelineStepOperation {
+  REMOVE,
+  REPLACE,
+  BATCH,
+} PipelineStepOperation;
+
 typedef const char *(*CNormalizationFn)(const char*);
 
 typedef struct FuzzyHashingConfig {
@@ -34,6 +45,41 @@ typedef struct GaoyaHashingConfig {
   CNormalizationFn normalization_fn;
 } GaoyaHashingConfig;
 
+typedef struct PipelineLicenseMatches {
+  const struct LicenseMatches *matches;
+  uintptr_t length;
+} PipelineLicenseMatches;
+
+typedef struct ReplacementPipelineStep {
+  enum PipelineStepArgumentKind kind;
+  const union PipelineStepArguments *arguments;
+  const char *text;
+} ReplacementPipelineStep;
+
+typedef struct BatchPipelineStep {
+  const struct PipelineStep *steps;
+  uintptr_t size;
+} BatchPipelineStep;
+
+typedef union PipelineStepArguments {
+  const char *text;
+  const char *regex;
+  const struct ReplacementPipelineStep *replacement;
+  const struct BatchPipelineStep *batch;
+} PipelineStepArguments;
+
+typedef struct PipelineStep {
+  enum PipelineStepArgumentKind kind;
+  enum PipelineStepOperation operation;
+  const union PipelineStepArguments *arguments;
+} PipelineStep;
+
+typedef struct PipelineConfig {
+  const struct PipelineStep *steps;
+  uintptr_t length;
+  float threshold;
+} PipelineConfig;
+
 const char *fuzzy_compute_hash_default_normalization(const struct FuzzyHashingConfig *config,
                                                      const char *license);
 
@@ -55,3 +101,19 @@ struct LicenseMatches gaoya_detect_license_default_normalization(const struct Ga
 
 struct LicenseMatches gaoya_detect_license(const struct GaoyaHashingConfig *config,
                                            const char *license);
+
+struct PipelineLicenseMatches fuzzy_pipeline_detect_license_default_normalization(const struct FuzzyHashingConfig *config,
+                                                                                  const struct PipelineConfig *pipeline,
+                                                                                  const char *license);
+
+struct PipelineLicenseMatches fuzzy_pipeline_detect_license(const struct FuzzyHashingConfig *config,
+                                                            const struct PipelineConfig *pipeline,
+                                                            const char *license);
+
+struct PipelineLicenseMatches gaoya_pipeline_detect_license_default_normalization(const struct GaoyaHashingConfig *config,
+                                                                                  const struct PipelineConfig *pipeline,
+                                                                                  const char *license);
+
+struct PipelineLicenseMatches gaoya_pipeline_detect_license_default(const struct GaoyaHashingConfig *config,
+                                                                    const struct PipelineConfig *pipeline,
+                                                                    const char *license);

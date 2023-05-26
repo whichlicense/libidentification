@@ -22,7 +22,9 @@ use std::slice;
 use std::string::ToString;
 
 use gaoya::minhash::{MinHasher32, MinHashIndex};
-use whichlicense_detection::{DEFAULT_NORMALIZATION_FN, LicenseListActions};
+use regex::Regex;
+use serde::ser::Serialize;
+use whichlicense_detection::{DEFAULT_NORMALIZATION_FN, LicenseListActions, Pipeline, Segment, Using};
 use whichlicense_detection::detecting::fuzzy_implementation::fuzzy_implementation::FuzzyDetection;
 use whichlicense_detection::detecting::gaoya_implementation::gaoya_implementation::GaoyaDetection;
 
@@ -232,34 +234,145 @@ pub extern "C" fn gaoya_detect_license<'jvm>(config: &'jvm GaoyaHashingConfig, l
     }
 }
 
-/*#[repr(C)]
-pub enum PipelineStepKind { FUNC, REGEX, IMPL }
+#[repr(C)]
+pub struct PipelineLicenseMatches {
+    pub matches: *const LicenseMatches,
+    pub length: usize,
+}
 
 #[repr(C)]
-pub union PipelineStepProcessor {
-    function: extern "C" fn(*const c_char) -> *const c_char,
+#[derive(Clone)]
+pub enum PipelineStepOperation { REMOVE, REPLACE, BATCH }
+
+#[repr(C)]
+#[derive(Clone)]
+pub enum PipelineStepArgumentKind { TEXT, REGEX }
+
+#[repr(C)]
+pub union PipelineStepArguments {
+    text: *const c_char,
     regex: *const c_char,
-    implementation: *const c_char,
+    replacement: *const ReplacementPipelineStep,
+    batch: *const BatchPipelineStep,
 }
 
 #[repr(C)]
+pub struct ReplacementPipelineStep {
+    kind: PipelineStepArgumentKind,
+    arguments: *const PipelineStepArguments,
+    text: *const c_char,
+}
+
+#[repr(C)]
+pub struct BatchPipelineStep {
+    steps: *const PipelineStep,
+    size: usize,
+}
+
+#[repr(C)]
+#[derive(Clone)]
 pub struct PipelineStep {
-    kind: PipelineStepKind,
-    processor: PipelineStepProcessor,
+    kind: PipelineStepArgumentKind,
+    operation: PipelineStepOperation,
+    arguments: *const PipelineStepArguments,
 }
 
 #[repr(C)]
-pub struct Pipeline {
+pub struct PipelineConfig {
+    steps: *const PipelineStep,
+    length: usize,
     threshold: f32,
-    steps: [PipelineStepProcessor],
+}
+
+#[inline(always)]
+unsafe fn rustic_step_operation(kind: &PipelineStepArgumentKind, arguments: &PipelineStepArguments) -> Using {
+    match kind {
+        PipelineStepArgumentKind::TEXT => Using::Text(rustic_string(arguments.text, "failed to obtain text").to_string()),
+        PipelineStepArgumentKind::REGEX => Using::Regex(Regex::new(rustic_string(arguments.regex, "failed to obtain the regex"))
+            .expect("failed to create regex pattern from c string"))
+    }
+}
+
+#[inline(always)]
+unsafe fn rustic_replacement_step(step: &ReplacementPipelineStep) -> Segment {
+    let args = step.arguments.as_ref().expect("failed to obtain operation arguments");
+    Segment::Replace(rustic_step_operation(&args.replacement
+        .as_ref().expect("failed to obtain operation replacement").kind, args),
+                     rustic_string(args.replacement.as_ref().expect("failed to obtain operation arguments")
+                                       .text, "failed to obtain replacement text").to_string())
+}
+
+#[inline(always)]
+unsafe fn rustic_step(step: &PipelineStep) -> Segment {
+    let args = step.arguments.as_ref().expect("failed to obtain operation arguments");
+    match step.operation {
+        PipelineStepOperation::REMOVE => Segment::Remove(rustic_step_operation(&step.kind, args)),
+        PipelineStepOperation::REPLACE => rustic_replacement_step(&args.replacement
+            .as_ref().expect("failed to obtain operation replacement arguments")),
+        PipelineStepOperation::BATCH => {
+            let batch = args.batch.as_ref().expect("failed to obtain batch");
+            Segment::Batch(rustic_vec(batch.steps, batch.size).iter()
+                .map(|s| unsafe { rustic_step(s) }).collect::<Vec<Segment>>())
+        }
+    }
+}
+
+#[inline(always)]
+fn rustic_pipeline_detect_license<'jvm, T: Serialize>(algorithm: &dyn LicenseListActions<T>, pipeline: &'jvm PipelineConfig, license: &str) -> PipelineLicenseMatches {
+    let steps = rustic_vec(pipeline.steps, pipeline.length).iter()
+        .map(|s| unsafe { rustic_step(s) }).collect::<Vec<Segment>>();
+    let res = Pipeline::new(steps).run(algorithm, license, pipeline.threshold);
+
+    let matches = res.iter().map(|ms| {
+        LicenseMatches {
+            length: ms.len(),
+            matches: c_box(ms.iter().map(|m| {
+                LicenseMatchEntry {
+                    name: c_string(m.name.clone(), "failed to clone the license name"),
+                    confidence: m.confidence,
+                }
+            }).collect::<Box<[LicenseMatchEntry]>>()),
+        }
+    }).collect::<Box<[LicenseMatches]>>();
+
+    PipelineLicenseMatches {
+        length: matches.len(),
+        matches: c_box(matches),
+    }
 }
 
 #[no_mangle]
-pub extern "C" fn fuzzy_pipeline_detect_license<'jvm>(config: &'jvm FuzzyHashingConfig, pipeline: &'jvm Pipeline, license: &'jvm c_char) -> *const c_char {
-    CString::new("").expect("placeholder").into_raw()
+pub extern "C" fn fuzzy_pipeline_detect_license_default_normalization<'jvm>(config: &'jvm FuzzyHashingConfig, pipeline: &'jvm PipelineConfig, license: &'jvm c_char) -> PipelineLicenseMatches {
+    let mut fuzzy = configure_fuzzy_detection(config, DEFAULT_NORMALIZATION_FN);
+    fuzzy.load_from_memory(rustic_vec(config.license_index, config.license_index_size));
+    let raw_license = rustic_string(license, "failed to obtain the license text");
+    rustic_pipeline_detect_license(&fuzzy, pipeline, raw_license)
+}
+
+//TODO fix normalization
+#[no_mangle]
+pub extern "C" fn fuzzy_pipeline_detect_license<'jvm>(config: &'jvm FuzzyHashingConfig, pipeline: &'jvm PipelineConfig, license: &'jvm c_char) -> PipelineLicenseMatches {
+    let mut fuzzy = configure_fuzzy_detection(config, SKIP_NORMALIZATION_FN);
+    fuzzy.load_from_memory(rustic_vec(config.license_index, config.license_index_size));
+    let raw_license = rustic_string(license, "failed to obtain the license text");
+    let normalized_license = rustic_normalize(config.normalization_fn, raw_license);
+    rustic_pipeline_detect_license(&fuzzy, pipeline, normalized_license)
 }
 
 #[no_mangle]
-pub extern "C" fn gaoya_pipeline_detect_license<'jvm>(config: &'jvm GaoyaHashingConfig, pipeline: &'jvm Pipeline, license: &'jvm c_char) -> *const c_char {
-    CString::new("").expect("placeholder").into_raw()
-}*/
+pub extern "C" fn gaoya_pipeline_detect_license_default_normalization<'jvm>(config: &'jvm GaoyaHashingConfig, pipeline: &'jvm PipelineConfig, license: &'jvm c_char) -> PipelineLicenseMatches {
+    let mut gaoya = configure_gaoya_detection(config, DEFAULT_NORMALIZATION_FN);
+    gaoya.load_from_memory(rustic_vec(config.license_index, config.license_index_size));
+    let raw_license = rustic_string(license, "failed to obtain the license text");
+    rustic_pipeline_detect_license(&gaoya, pipeline, raw_license)
+}
+
+//TODO fix normalization
+#[no_mangle]
+pub extern "C" fn gaoya_pipeline_detect_license_default<'jvm>(config: &'jvm GaoyaHashingConfig, pipeline: &'jvm PipelineConfig, license: &'jvm c_char) -> PipelineLicenseMatches {
+    let mut gaoya = configure_gaoya_detection(config, SKIP_NORMALIZATION_FN);
+    gaoya.load_from_memory(rustic_vec(config.license_index, config.license_index_size));
+    let raw_license = rustic_string(license, "failed to obtain the license text");
+    let normalized_license = rustic_normalize(config.normalization_fn, raw_license);
+    rustic_pipeline_detect_license(&gaoya, pipeline, normalized_license)
+}
