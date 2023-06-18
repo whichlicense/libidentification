@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2023 - for information on the respective copyright owner
+ * see the NOTICE file and/or the repository https://github.com/whichlicense/libidentification.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package com.whichlicense.metadata.identification.license.panama;
 
 import java.time.Duration;
@@ -22,7 +28,7 @@ public class Main {
                 THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                 """);
         }
-        
+
         var after = Instant.now();
 
         System.out.println(result);

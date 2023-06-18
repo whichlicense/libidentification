@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2023 - for information on the respective copyright owner
- * see the NOTICE file and/or the repository https://github.com/whichlicense/license-detection-backends.
+ * see the NOTICE file and/or the repository https://github.com/whichlicense/libidentification.
  *
  * SPDX-License-Identifier: Apache-2.0
  */

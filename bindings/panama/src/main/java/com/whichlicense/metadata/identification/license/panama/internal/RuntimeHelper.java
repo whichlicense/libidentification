@@ -11,11 +11,10 @@ import java.lang.foreign.*;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static java.lang.foreign.SymbolLookup.loaderLookup;
+import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toUnmodifiableList;
-import static java.util.stream.Collectors.toUnmodifiableSet;
 
 public final class RuntimeHelper {
     private static final Linker LINKER = Linker.nativeLinker();
@@ -97,6 +96,6 @@ public final class RuntimeHelper {
                                 .replace(".LICENSE", ""),
                         LicenseMatchEntry.confidence$get(element),
                         algorithm, parameters
-                )).collect(Collectors.toCollection(TreeSet::new));
+                )).collect(toCollection(TreeSet::new));
     }
 }
