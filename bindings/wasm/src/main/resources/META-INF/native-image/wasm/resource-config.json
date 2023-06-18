@@ -1,0 +1,16 @@
+{
+  "resources": [
+    {
+      "pattern": "identification.js"
+    },
+    {
+      "pattern": "identification.wasm.js"
+    },
+    {
+      "pattern": "fuzzy.index.json"
+    },
+    {
+      "pattern": "gaoya.index.json"
+    }
+  ]
+}

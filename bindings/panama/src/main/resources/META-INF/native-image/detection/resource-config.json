@@ -1,0 +1,13 @@
+{
+  "resources": [
+    {
+      "pattern": "libdetection-(windows|linux|darwin)-(amd64|aarch64).(dll|so|dylib)"
+    },
+    {
+      "pattern": "fuzzy.index.bincode"
+    },
+    {
+      "pattern": "gaoya.index.bincode"
+    }
+  ]
+}
