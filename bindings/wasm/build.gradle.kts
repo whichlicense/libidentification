@@ -33,7 +33,7 @@ configurations.all {
 }
 
 dependencies {
-    compileOnlyApi("org.graalvm.truffle:truffle-api:22.3.2")
+    compileOnlyApi("org.graalvm.truffle:truffle-api:23.0.0")
     api("com.whichlicense.identification:license:0.3.5-SNAPSHOT")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.3")
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.9.3")
