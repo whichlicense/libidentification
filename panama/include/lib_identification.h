@@ -1,12 +1,14 @@
-//#include <stdarg.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
-//#include <stdlib.h>
+#include <stdlib.h>
+
+typedef void *LicenseIndex;
 
 typedef const char *(*CNormalizationFn)(const char*);
 
 typedef struct FuzzyHashingConfig {
-  void *index;
+  LicenseIndex index;
   bool exit_on_exact_match;
   CNormalizationFn normalization_fn;
 } FuzzyHashingConfig;
@@ -22,7 +24,7 @@ typedef struct LicenseMatches {
 } LicenseMatches;
 
 typedef struct GaoyaHashingConfig {
-  void *index;
+  LicenseIndex index;
   uintptr_t band_count;
   uintptr_t band_width;
   uintptr_t shingle_size;
@@ -40,17 +42,14 @@ typedef struct PipelineConfig {
   float threshold;
 } PipelineConfig;
 
-void *construct_fuzzy_index(const uint8_t *entries, uintptr_t size);
+LicenseIndex construct_fuzzy_index(const uint8_t *entries, uintptr_t size);
 
 const char *fuzzy_compute_hash(const struct FuzzyHashingConfig *config, const char *license);
 
 struct LicenseMatches fuzzy_detect_license(const struct FuzzyHashingConfig *config,
                                            const char *license);
 
-void *construct_gaoya_index(uintptr_t band_count,
-                            uintptr_t band_width,
-                            const uint8_t *entries,
-                            uintptr_t size);
+LicenseIndex construct_gaoya_index(const uint8_t *entries, uintptr_t size);
 
 const char *gaoya_compute_hash(const struct GaoyaHashingConfig *config, const char *license);
 

@@ -21,35 +21,36 @@ use regex::Regex;
 use std::string::ToString;
 
 use gaoya::minhash::{MinHasher32, MinHashIndex};
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use serde::ser::Serialize;
-use whichlicense_detection::{DEFAULT_NORMALIZATION_FN, LicenseEntry, LicenseListActions, Pipeline, Segment, Using};
+use whichlicense_detection::{DEFAULT_NORMALIZATION_FN, DiskData, LicenseEntry, LicenseListActions, Pipeline, Segment, Using};
 use whichlicense_detection::detecting::fuzzy_implementation::fuzzy_implementation::FuzzyDetection;
 use whichlicense_detection::detecting::gaoya_implementation::gaoya_implementation::GaoyaDetection;
 
 use crate::rustic::ffm::{c_box, c_string, rustic_normalize, rustic_string, rustic_vec, unsafe_rustic_vec};
 use crate::rustic::pipeline::{PipelineConfig, PipelineLicenseMatches, segment_to_raw_ptr};
-use crate::rustic::repr::{FuzzyHashingConfig, GaoyaHashingConfig, LicenseMatchEntry, LicenseMatches};
+use crate::rustic::repr::{FuzzyHashingConfig, LicenseIndex, GaoyaHashingConfig, LicenseMatchEntry, LicenseMatches};
 
 mod rustic;
 
 static SKIP_NORMALIZATION_FN: fn(&str) -> String = |l| l.to_string();
 
 #[no_mangle]
-pub extern "C" fn construct_fuzzy_index<'jvm>(entries: *const u8, size: usize) -> *mut c_void {
+pub extern "C" fn construct_fuzzy_index<'jvm>(entries: *const u8, size: usize) -> LicenseIndex {
     let mut fuzzy = FuzzyDetection {
         licenses: vec![],
         min_confidence: 50,
         exit_on_exact_match: false,
         normalization_fn: SKIP_NORMALIZATION_FN,
     };
-    fuzzy.load_from_memory(rustic_vec(entries, size));
+    fuzzy.load_from_memory(&rustic_vec(entries, size));
     return Box::into_raw(Box::new(fuzzy.licenses)) as *mut c_void
 }
 
 #[inline(always)]
 fn configure_fuzzy_detection(config: &FuzzyHashingConfig, normalization_fn: fn(&str) -> String) -> FuzzyDetection {
     FuzzyDetection {
-        licenses: *unsafe { Box::from_raw(config.index as *mut Vec<LicenseEntry<String>>) },
+        licenses: unsafe { &(*(config.index as *const Vec<LicenseEntry<String>>)) }.clone(),
         min_confidence: 50,
         exit_on_exact_match: config.exit_on_exact_match,
         normalization_fn,
@@ -96,21 +97,24 @@ pub extern "C" fn fuzzy_detect_license<'jvm>(config: &'jvm FuzzyHashingConfig, l
 }
 
 #[no_mangle]
-pub extern "C" fn construct_gaoya_index<'jvm>(band_count: usize, band_width: usize, entries: *const u8, size: usize) -> *mut c_void {
-    let mut gaoya = GaoyaDetection {
-        index: MinHashIndex::new(band_count, band_width, 0.5),
-        min_hasher: MinHasher32::new(band_count * band_width),
-        shingle_text_size: 50,
-        normalization_fn: SKIP_NORMALIZATION_FN,
-    };
-    gaoya.load_from_memory(rustic_vec(entries, size));
-    return Box::into_raw(Box::new(gaoya.index)) as *mut c_void
+pub extern "C" fn construct_gaoya_index<'jvm>(entries: *const u8, size: usize) -> LicenseIndex {
+    Box::into_raw(Box::new(
+        bincode::deserialize(&&rustic_vec(entries, size)[..]).unwrap_or(DiskData::<Vec<u32>> {
+            licenses: Vec::new(),
+        }).licenses.par_iter()
+            .map(|l| (l.name.clone(), l.hash.clone()))
+            .collect::<Vec<(String, Vec<u32>)>>()
+    )) as *mut c_void
 }
 
 #[inline(always)]
 fn configure_gaoya_detection(config: &GaoyaHashingConfig, normalization_fn: fn(&str) -> String) -> GaoyaDetection {
+    let signatures = unsafe { &(*(config.index as *const Vec<(String, Vec<u32>)>)) }.clone();
+    let mut idx = MinHashIndex::new_with_capacity(config.band_count, config.band_width, 0.5, signatures.len());
+    idx.par_bulk_insert_pairs(signatures);
+
     GaoyaDetection {
-        index: *unsafe { Box::from_raw(config.index as *mut MinHashIndex<u32, String>) },
+        index: idx,
         min_hasher: MinHasher32::new(config.band_count * config.band_width),
         shingle_text_size: config.shingle_size,
         normalization_fn,

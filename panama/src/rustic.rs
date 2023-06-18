@@ -71,6 +71,8 @@ pub mod repr {
     use std::os::raw::c_char;
     use crate::rustic::ffm::CNormalizationFn;
 
+    pub type LicenseIndex = *mut c_void;
+
     #[repr(C)]
     pub struct LicenseMatchEntry {
         pub name: *const c_char,
@@ -85,14 +87,14 @@ pub mod repr {
 
     #[repr(C)]
     pub struct FuzzyHashingConfig {
-        pub index: *mut c_void,
+        pub index: LicenseIndex,
         pub exit_on_exact_match: bool,
         pub normalization_fn: CNormalizationFn,
     }
 
     #[repr(C)]
     pub struct GaoyaHashingConfig {
-        pub index: *mut c_void,
+        pub index: LicenseIndex,
         pub band_count: usize,
         pub band_width: usize,
         pub shingle_size: usize,
