@@ -21,7 +21,7 @@ jobs:
   publish:
     strategy:
       matrix:
-        directory: [ panama ]
+        directory: [ "library/panama" ]
     uses: whichlicense/.github/.github/workflows/maven-publishing-next.yml@main
     with:
       root-directory: ${{ matrix.directory }}
