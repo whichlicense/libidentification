@@ -30,7 +30,7 @@ jobs:
     runs-on: ${{ matrix.os }}-latest
     defaults:
       run:
-        working-directory: panama
+        working-directory: library/panama
     steps:
       - uses: actions/checkout@v3
       - name: Build lib on ${{ matrix.os }}
@@ -49,9 +49,9 @@ jobs:
         with:
           name: release-${{ github.sha }}
           path: |
-            ./panama/libidentification-linux-amd64.so
-            ./panama/libidentification-windows-amd64.dll
-            ./panama/libidentification-darwin-amd64.dylib
+            ./library/panama/libidentification-linux-amd64.so
+            ./library/panama/libidentification-windows-amd64.dll
+            ./library/panama/libidentification-darwin-amd64.dylib
           if-no-files-found: error
           retention-days: 1
   transpile:
@@ -59,7 +59,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: wasm
+        working-directory: library/wasm
     steps:
       - uses: actions/checkout@v3
       - name: Install wasm-pack
@@ -79,10 +79,10 @@ jobs:
         with:
           name: release-${{ github.sha }}
           path: |
-            ./wasm/libidentification.wasm
-            ./wasm/libidentification.wasm.js
-            ./wasm/libidentification.wasm.d.ts
-            ./wasm/libidentification.wasm.js.d.ts
+            ./library/wasm/libidentification.wasm
+            ./library/wasm/libidentification.wasm.js
+            ./library/wasm/libidentification.wasm.d.ts
+            ./library/wasm/libidentification.wasm.js.d.ts
           if-no-files-found: error
           retention-days: 1
   release:
