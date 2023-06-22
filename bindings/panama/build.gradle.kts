@@ -11,7 +11,7 @@ plugins {
 }
 
 group = "com.whichlicense.identification.license"
-version = "0.7.0-SNAPSHOT"
+version = "0.7.6-SNAPSHOT"
 
 java {
     toolchain {
@@ -33,13 +33,13 @@ configurations.all {
 }
 
 dependencies {
-    api("com.whichlicense:foreign:0.6.4-SNAPSHOT")
-    api("com.whichlicense.identification:license:0.7.0-SNAPSHOT")
+    api("com.whichlicense:foreign:0.7.6-SNAPSHOT")
+    api("com.whichlicense.identification:license:0.7.6-SNAPSHOT")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.3")
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.9.3")
     testImplementation("org.assertj:assertj-core:3.24.2")
-    testImplementation("com.whichlicense.testing:naming:0.3.0-SNAPSHOT")
-    testImplementation("com.whichlicense.testing:filecontent:0.3.0-SNAPSHOT")
+    testImplementation("com.whichlicense.testing:naming:0.7.6-SNAPSHOT")
+    testImplementation("com.whichlicense.testing:filecontent:0.7.6-SNAPSHOT")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.3")
 }
 

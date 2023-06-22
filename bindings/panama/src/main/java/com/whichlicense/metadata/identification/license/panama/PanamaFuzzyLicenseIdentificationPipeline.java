@@ -10,44 +10,38 @@ import com.whichlicense.metadata.identification.license.LicenseIdentificationPip
 import com.whichlicense.metadata.identification.license.LicenseIdentificationPipelineStepTrace;
 import com.whichlicense.metadata.identification.license.panama.internal.FuzzyHashingConfig;
 import com.whichlicense.metadata.identification.license.panama.internal.PipelineConfig;
+import com.whichlicense.metadata.identification.license.panama.internal.RuntimeHelper;
+import com.whichlicense.metadata.identification.license.panama.internal.lib_identification_h;
+import com.whichlicense.metadata.identification.license.pipeline.PipelineStep;
 
 import java.lang.foreign.Arena;
-import java.util.Collections;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static com.whichlicense.metadata.identification.license.internal.HashingAlgorithm.FUZZY;
+import static com.whichlicense.metadata.identification.license.panama.PanamaFuzzyLicenseIdentifier.IndexHolder.FUZZY_INDEX;
+import static com.whichlicense.metadata.identification.license.panama.internal.PipelineHelper.wrapStep;
+import static java.lang.foreign.MemorySegment.NULL;
 
 public class PanamaFuzzyLicenseIdentificationPipeline implements LicenseIdentificationPipeline {
     @Override
-    public List<LicenseIdentificationPipelineStepTrace> identifyLicenses(String license) {
+    public List<LicenseIdentificationPipelineStepTrace> identifyLicenses(List<PipelineStep> steps, float threshold, String license) {
         try (var arena = Arena.openConfined()) {
             var fuzzyConfig = FuzzyHashingConfig.allocate(arena);
             var pipelineConfig = PipelineConfig.allocate(arena);
             var licenseRef = arena.allocateUtf8String(license.strip());
 
-            /*FuzzyHashingConfig.license_index$set(fuzzyConfig, FUZZY_INDEX);
-            FuzzyHashingConfig.license_index_size$set(fuzzyConfig, FUZZY_INDEX_SIZE);
-            FuzzyHashingConfig.max_license_count$set(fuzzyConfig, Long.MAX_VALUE);
-            FuzzyHashingConfig.confidence_threshold$set(fuzzyConfig, (byte) 50);
+            FuzzyHashingConfig.index$set(fuzzyConfig, FUZZY_INDEX);
             FuzzyHashingConfig.exit_on_exact_match$set(fuzzyConfig, true);
+            FuzzyHashingConfig.normalization_fn$set(fuzzyConfig, NULL);
 
-            PipelineConfig.length$set(pipelineConfig, 1L);
-            PipelineConfig.threshold$set(pipelineConfig, 100);
+            IntStream.range(0, steps.size()).forEach(i ->
+                    PipelineConfig.steps$set(pipelineConfig, i, wrapStep(arena, steps.get(i))));
+            PipelineConfig.length$set(pipelineConfig, steps.size());
+            PipelineConfig.threshold$set(pipelineConfig, threshold);
 
-            var pipelineStep = PipelineStep.allocate(arena);
-            PipelineStep.kind$set(pipelineStep, REGEX());
-            PipelineStep.operation$set(pipelineStep, REMOVE());
-
-            var pipelineStepArguments = PipelineStepArguments.allocate(arena);
-            var regex = arena.allocateUtf8String("[0-9]");
-            PipelineStepArguments.regex$set(pipelineStepArguments, regex);
-
-            PipelineStep.arguments$set(pipelineStep, pipelineStepArguments);
-            PipelineConfig.steps$set(pipelineConfig, 0L, pipelineStep);
-
-            var raw_matches = lib_identification_h.fuzzy_pipeline_detect_license_default_normalization(arena, fuzzyConfig, pipelineConfig, licenseRef);
-            return RuntimeHelper.licenseIdentificationPipelineStepTraceSetOfAddress(raw_matches, FUZZY, arena.scope());*/
-            return Collections.emptyList();
+            var raw_matches = lib_identification_h.fuzzy_pipeline_detect_license(arena, fuzzyConfig, pipelineConfig, licenseRef);
+            return RuntimeHelper.licenseIdentificationPipelineStepTraceSetOfAddress(raw_matches, FUZZY, arena.scope());
         }
     }
 

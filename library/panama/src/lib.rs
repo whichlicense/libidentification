@@ -192,12 +192,13 @@ pub extern "C" fn pipeline_replace_regex_step(pattern: *const c_char, replacemen
 /*#[no_mangle]
 pub extern "C" fn pipeline_custom_step() -> *mut c_void {
     Box::into_raw(Box::new("")) as *mut c_void
-}
+}*/
 
 #[no_mangle]
-pub extern "C" fn pipeline_batch_steps() -> *mut c_void {
-    Box::into_raw(Box::new("")) as *mut c_void
-}*/
+pub extern "C" fn pipeline_batch_steps(steps: *const c_void, length: usize) -> *mut c_void {
+    let steps = unsafe { unsafe_rustic_vec(steps as *const Segment, length) };
+    segment_to_raw_ptr(Segment::Batch(steps))
+}
 
 #[inline(always)]
 fn rustic_pipeline_detect_license<'jvm, T: Serialize>(algorithm: &dyn LicenseListActions<T>, pipeline: &'jvm PipelineConfig, license: &str) -> PipelineLicenseMatches {
