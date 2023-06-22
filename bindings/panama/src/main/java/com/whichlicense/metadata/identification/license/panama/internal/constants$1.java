@@ -2,64 +2,62 @@
 
 package com.whichlicense.metadata.identification.license.panama.internal;
 
+import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.MemoryLayout;
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.VarHandle;
-import java.nio.ByteOrder;
-import java.lang.foreign.*;
-import static java.lang.foreign.ValueLayout.*;
-final class constants$1 {
 
-    // Suppresses default constructor, ensuring non-instantiability.
-    private constants$1() {}
+final class constants$1 {
     static final FunctionDescriptor gaoya_compute_hash$FUNC = FunctionDescriptor.of(Constants$root.C_POINTER$LAYOUT,
-        Constants$root.C_POINTER$LAYOUT,
-        Constants$root.C_POINTER$LAYOUT
+            Constants$root.C_POINTER$LAYOUT,
+            Constants$root.C_POINTER$LAYOUT
     );
     static final MethodHandle gaoya_compute_hash$MH = RuntimeHelper.downcallHandle(
-        "gaoya_compute_hash",
-        constants$1.gaoya_compute_hash$FUNC
+            "gaoya_compute_hash",
+            constants$1.gaoya_compute_hash$FUNC
     );
     static final FunctionDescriptor gaoya_detect_license$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
-        Constants$root.C_POINTER$LAYOUT.withName("matches"),
-        Constants$root.C_LONG_LONG$LAYOUT.withName("length")
-    ).withName("LicenseMatches"),
-        Constants$root.C_POINTER$LAYOUT,
-        Constants$root.C_POINTER$LAYOUT
+                    Constants$root.C_POINTER$LAYOUT.withName("matches"),
+                    Constants$root.C_LONG_LONG$LAYOUT.withName("length")
+            ).withName("LicenseMatches"),
+            Constants$root.C_POINTER$LAYOUT,
+            Constants$root.C_POINTER$LAYOUT
     );
     static final MethodHandle gaoya_detect_license$MH = RuntimeHelper.downcallHandle(
-        "gaoya_detect_license",
-        constants$1.gaoya_detect_license$FUNC
+            "gaoya_detect_license",
+            constants$1.gaoya_detect_license$FUNC
     );
     static final FunctionDescriptor pipeline_remove_text_step$FUNC = FunctionDescriptor.of(Constants$root.C_POINTER$LAYOUT,
-        Constants$root.C_POINTER$LAYOUT
+            Constants$root.C_POINTER$LAYOUT
     );
     static final MethodHandle pipeline_remove_text_step$MH = RuntimeHelper.downcallHandle(
-        "pipeline_remove_text_step",
-        constants$1.pipeline_remove_text_step$FUNC
+            "pipeline_remove_text_step",
+            constants$1.pipeline_remove_text_step$FUNC
     );
     static final FunctionDescriptor pipeline_remove_regex_step$FUNC = FunctionDescriptor.of(Constants$root.C_POINTER$LAYOUT,
-        Constants$root.C_POINTER$LAYOUT
+            Constants$root.C_POINTER$LAYOUT
     );
     static final MethodHandle pipeline_remove_regex_step$MH = RuntimeHelper.downcallHandle(
-        "pipeline_remove_regex_step",
-        constants$1.pipeline_remove_regex_step$FUNC
+            "pipeline_remove_regex_step",
+            constants$1.pipeline_remove_regex_step$FUNC
     );
     static final FunctionDescriptor pipeline_replace_text_step$FUNC = FunctionDescriptor.of(Constants$root.C_POINTER$LAYOUT,
-        Constants$root.C_POINTER$LAYOUT,
-        Constants$root.C_POINTER$LAYOUT
+            Constants$root.C_POINTER$LAYOUT,
+            Constants$root.C_POINTER$LAYOUT
     );
     static final MethodHandle pipeline_replace_text_step$MH = RuntimeHelper.downcallHandle(
-        "pipeline_replace_text_step",
-        constants$1.pipeline_replace_text_step$FUNC
+            "pipeline_replace_text_step",
+            constants$1.pipeline_replace_text_step$FUNC
     );
     static final FunctionDescriptor pipeline_replace_regex_step$FUNC = FunctionDescriptor.of(Constants$root.C_POINTER$LAYOUT,
-        Constants$root.C_POINTER$LAYOUT,
-        Constants$root.C_POINTER$LAYOUT
+            Constants$root.C_POINTER$LAYOUT,
+            Constants$root.C_POINTER$LAYOUT
     );
     static final MethodHandle pipeline_replace_regex_step$MH = RuntimeHelper.downcallHandle(
-        "pipeline_replace_regex_step",
-        constants$1.pipeline_replace_regex_step$FUNC
+            "pipeline_replace_regex_step",
+            constants$1.pipeline_replace_regex_step$FUNC
     );
+
+    // Suppresses default constructor, ensuring non-instantiability.
+    private constants$1() {
+    }
 }
-
-

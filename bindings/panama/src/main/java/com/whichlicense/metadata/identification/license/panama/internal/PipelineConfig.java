@@ -3,12 +3,11 @@
 package com.whichlicense.metadata.identification.license.panama.internal;
 
 import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.MemoryLayout.PathElement;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SegmentAllocator;
 import java.lang.foreign.StructLayout;
 import java.lang.invoke.VarHandle;
-
-import static java.lang.foreign.ValueLayout.PathElement;
 
 /**
  * {@snippet :
@@ -20,7 +19,6 @@ import static java.lang.foreign.ValueLayout.PathElement;
  *}
  */
 public class PipelineConfig {
-
     static final StructLayout $struct$LAYOUT = MemoryLayout.structLayout(
             Constants$root.C_POINTER$LAYOUT.withName("steps"),
             Constants$root.C_LONG_LONG$LAYOUT.withName("length"),

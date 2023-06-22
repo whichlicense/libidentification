@@ -5,9 +5,8 @@ package com.whichlicense.metadata.identification.license.panama.internal;
 import com.whichlicense.foreign.ForeignRuntimeHelper;
 
 import java.lang.foreign.*;
+import java.lang.foreign.MemoryLayout.PathElement;
 import java.lang.invoke.VarHandle;
-
-import static java.lang.foreign.ValueLayout.PathElement;
 
 /**
  * {@snippet :

@@ -6,11 +6,9 @@
  */
 
 import com.whichlicense.metadata.identification.license.LicenseHasher;
+import com.whichlicense.metadata.identification.license.LicenseIdentificationPipeline;
 import com.whichlicense.metadata.identification.license.LicenseIdentifier;
-import com.whichlicense.metadata.identification.license.panama.PanamaFuzzyLicenseHasher;
-import com.whichlicense.metadata.identification.license.panama.PanamaFuzzyLicenseIdentifier;
-import com.whichlicense.metadata.identification.license.panama.PanamaGaoyaLicenseHasher;
-import com.whichlicense.metadata.identification.license.panama.PanamaGaoyaLicenseIdentifier;
+import com.whichlicense.metadata.identification.license.panama.*;
 
 module whichlicense.identification.license.panama {
     requires java.logging;
@@ -18,4 +16,5 @@ module whichlicense.identification.license.panama {
     requires transitive whichlicense.identification.license;
     provides LicenseHasher with PanamaFuzzyLicenseHasher, PanamaGaoyaLicenseHasher;
     provides LicenseIdentifier with PanamaFuzzyLicenseIdentifier, PanamaGaoyaLicenseIdentifier;
+    provides LicenseIdentificationPipeline with PanamaFuzzyLicenseIdentificationPipeline, PanamaGaoyaLicenseIdentificationPipeline;
 }

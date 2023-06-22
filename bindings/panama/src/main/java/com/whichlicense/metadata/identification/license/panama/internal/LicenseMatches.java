@@ -7,8 +7,6 @@ import com.whichlicense.foreign.ForeignRuntimeHelper;
 import java.lang.foreign.*;
 import java.lang.invoke.VarHandle;
 
-import static java.lang.foreign.ValueLayout.PathElement;
-
 /**
  * {@snippet :
  * struct LicenseMatches {
@@ -22,8 +20,8 @@ public class LicenseMatches {
             Constants$root.C_POINTER$LAYOUT.withName("matches"),
             Constants$root.C_LONG_LONG$LAYOUT.withName("length")
     ).withName("LicenseMatches");
-    static final VarHandle matches$VH = $struct$LAYOUT.varHandle(PathElement.groupElement("matches"));
-    static final VarHandle length$VH = $struct$LAYOUT.varHandle(PathElement.groupElement("length"));
+    static final VarHandle matches$VH = $struct$LAYOUT.varHandle(MemoryLayout.PathElement.groupElement("matches"));
+    static final VarHandle length$VH = $struct$LAYOUT.varHandle(MemoryLayout.PathElement.groupElement("length"));
 
     public static MemoryLayout $LAYOUT() {
         return LicenseMatches.$struct$LAYOUT;

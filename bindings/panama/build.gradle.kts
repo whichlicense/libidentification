@@ -10,7 +10,7 @@ plugins {
     id("signing")
 }
 
-group = "com.whichlicense.identification.license"
+group = "com.whichlicense.identification"
 version = "0.7.6-SNAPSHOT"
 
 java {
@@ -34,7 +34,7 @@ configurations.all {
 
 dependencies {
     api("com.whichlicense:foreign:0.7.6-SNAPSHOT")
-    api("com.whichlicense.identification:license:0.7.6-SNAPSHOT")
+    api("com.whichlicense:identification:0.7.6-SNAPSHOT")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.3")
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.9.3")
     testImplementation("org.assertj:assertj-core:3.24.2")

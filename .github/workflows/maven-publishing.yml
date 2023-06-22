@@ -22,7 +22,7 @@ jobs:
     strategy:
       matrix:
         directory: [ "bindings/panama" ]
-    uses: whichlicense/.github/.github/workflows/maven-publishing-next.yml@main
+    uses: whichlicense/.github/.github/workflows/maven-publishing.yml@main
     with:
       root-directory: ${{ matrix.directory }}
     secrets: inherit
