@@ -8,7 +8,7 @@ cbindgen = "0.24.3"
 
 [package]
 name = "identification-panama"
-version = "0.7.6"
+version = "0.7.7"
 edition = "2021"
 
 [lib]
