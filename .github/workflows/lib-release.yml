@@ -26,8 +26,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu, windows, macos ]
-    runs-on: ${{ matrix.os }}-latest
+        os: [ ubuntu-latest, windows-latest, macos-latest, self-hosted ]
+    runs-on: ${{ matrix.os }}
     defaults:
       run:
         working-directory: library/panama
@@ -38,6 +38,9 @@ jobs:
       - name: Rename linux lib
         if: contains(matrix.os, 'ubuntu')
         run: mv ./target/release-lto/libidentification_panama.so ./libidentification-linux-amd64.so
+      - name: Rename linux (arm64) lib
+        if: contains(matrix.os, 'self-hosted')
+        run: mv ./target/release-lto/libidentification_panama.so ./libidentification-linux-aarch64.so
       - name: Rename Windows lib
         if: contains(matrix.os, 'windows')
         run: mv ./target/release-lto/identification_panama.dll ./libidentification-windows-amd64.dll
@@ -50,6 +53,7 @@ jobs:
           name: release-${{ github.sha }}
           path: |
             ./library/panama/libidentification-linux-amd64.so
+            ./library/panama/libidentification-linux-aarch64.so
             ./library/panama/libidentification-windows-amd64.dll
             ./library/panama/libidentification-darwin-amd64.dylib
           if-no-files-found: error
@@ -99,6 +103,7 @@ jobs:
         with:
           files: |
             libidentification-linux-amd64.so
+            libidentification-linux-aarch64.so
             libidentification-windows-amd64.dll
             libidentification-darwin-amd64.dylib
             libidentification.wasm
