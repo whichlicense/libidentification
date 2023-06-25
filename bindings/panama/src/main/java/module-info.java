@@ -10,7 +10,7 @@ import com.whichlicense.metadata.identification.license.LicenseIdentificationPip
 import com.whichlicense.metadata.identification.license.LicenseIdentifier;
 import com.whichlicense.metadata.identification.license.panama.*;
 
-module whichlicense.identification.license.panama {
+open module whichlicense.identification.license.panama {
     requires java.logging;
     requires transitive whichlicense.foreign;
     requires transitive whichlicense.identification.license;

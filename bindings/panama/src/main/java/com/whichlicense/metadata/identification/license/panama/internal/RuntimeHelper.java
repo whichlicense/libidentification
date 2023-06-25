@@ -107,7 +107,7 @@ public final class RuntimeHelper {
                     }
                     consumer.accept(entry("steps", steps.stream()
                             .map(nested -> new PipelineStepImpl(describeOperation(nested),
-                                    captureOperationParams(nested)))));
+                                    captureOperationParams(nested))).toList()));
                 }
                 default -> {
                 }
