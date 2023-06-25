@@ -37,7 +37,7 @@ typedef struct PipelineLicenseMatches {
 } PipelineLicenseMatches;
 
 typedef struct PipelineConfig {
-  void *steps;
+  const void *const *steps;
   uintptr_t length;
   float threshold;
 } PipelineConfig;
@@ -64,7 +64,7 @@ void *pipeline_replace_text_step(const char *target, const char *replacement);
 
 void *pipeline_replace_regex_step(const char *pattern, const char *replacement);
 
-void *pipeline_batch_steps(const void *steps, uintptr_t length);
+void *pipeline_batch_steps(const void *const *steps, uintptr_t length);
 
 struct PipelineLicenseMatches fuzzy_pipeline_detect_license(const struct FuzzyHashingConfig *config,
                                                             const struct PipelineConfig *pipeline,

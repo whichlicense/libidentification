@@ -18,7 +18,6 @@ import java.lang.foreign.Arena;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.stream.IntStream;
 
 import static com.whichlicense.metadata.identification.license.internal.HashingAlgorithm.FUZZY;
 import static com.whichlicense.metadata.identification.license.panama.PanamaFuzzyLicenseIdentifier.IndexHolder.FUZZY_INDEX;
@@ -40,8 +39,10 @@ public class PanamaFuzzyLicenseIdentificationPipeline implements LicenseIdentifi
             FuzzyHashingConfig.exit_on_exact_match$set(fuzzyConfig, true);
             FuzzyHashingConfig.normalization_fn$set(fuzzyConfig, NULL);
 
-            IntStream.range(0, steps.size()).forEach(i ->
-                    PipelineConfig.steps$set(pipelineConfig, i, wrapStep(arena, steps.get(i))));
+            var stepPointers = RuntimeHelper.allocatePointerArray(arena, steps.stream()
+                    .map(s -> wrapStep(arena, s)).iterator(), steps.size());
+
+            PipelineConfig.steps$set(pipelineConfig, stepPointers);
             PipelineConfig.length$set(pipelineConfig, steps.size());
             PipelineConfig.threshold$set(pipelineConfig, threshold);
 

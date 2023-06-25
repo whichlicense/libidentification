@@ -17,9 +17,7 @@ import com.whichlicense.metadata.identification.license.pipeline.PipelineStep;
 import java.lang.foreign.Arena;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
-import java.util.stream.IntStream;
 
 import static com.whichlicense.metadata.identification.license.internal.HashingAlgorithm.GAOYA;
 import static com.whichlicense.metadata.identification.license.panama.PanamaGaoyaLicenseIdentifier.IndexHolder.GAOYA_INDEX;
@@ -41,8 +39,10 @@ public class PanamaGaoyaLicenseIdentificationPipeline implements LicenseIdentifi
             GaoyaHashingConfig.band_width$set(gaoyaConfig, 3L);
             GaoyaHashingConfig.shingle_size$set(gaoyaConfig, 50L);
 
-            IntStream.range(0, steps.size()).forEach(i ->
-                    PipelineConfig.steps$set(pipelineConfig, i, wrapStep(arena, steps.get(i))));
+            var stepPointers = RuntimeHelper.allocatePointerArray(arena, steps.stream()
+                    .map(s -> wrapStep(arena, s)).iterator(), steps.size());
+
+            PipelineConfig.steps$set(pipelineConfig, stepPointers);
             PipelineConfig.length$set(pipelineConfig, steps.size());
             PipelineConfig.threshold$set(pipelineConfig, threshold);
 

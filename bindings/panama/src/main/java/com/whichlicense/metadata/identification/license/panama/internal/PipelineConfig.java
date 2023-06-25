@@ -3,16 +3,17 @@
 package com.whichlicense.metadata.identification.license.panama.internal;
 
 import java.lang.foreign.MemoryLayout;
-import java.lang.foreign.MemoryLayout.PathElement;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SegmentAllocator;
 import java.lang.foreign.StructLayout;
 import java.lang.invoke.VarHandle;
 
+import static java.lang.foreign.ValueLayout.PathElement;
+
 /**
  * {@snippet :
  * struct PipelineConfig {
- *     void* steps;
+ *     void** steps;
  *     uintptr_t length;
  *     float threshold;
  * };
@@ -33,8 +34,14 @@ public class PipelineConfig {
         return PipelineConfig.$struct$LAYOUT;
     }
 
-    public static void steps$set(MemorySegment seg, long index, MemorySegment x) {
-        PipelineConfig.steps$VH.set(seg.asSlice(index * sizeof()), x);
+    /**
+     * Setter for field:
+     * {@snippet :
+     * void** steps;
+     *}
+     */
+    public static void steps$set(MemorySegment seg, MemorySegment x) {
+        PipelineConfig.steps$VH.set(seg, x);
     }
 
     /**
@@ -55,10 +62,6 @@ public class PipelineConfig {
      */
     public static void threshold$set(MemorySegment seg, float x) {
         PipelineConfig.threshold$VH.set(seg, x);
-    }
-
-    public static long sizeof() {
-        return $LAYOUT().byteSize();
     }
 
     public static MemorySegment allocate(SegmentAllocator allocator) {

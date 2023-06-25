@@ -27,7 +27,7 @@ use whichlicense_detection::{DEFAULT_NORMALIZATION_FN, DiskData, LicenseEntry, L
 use whichlicense_detection::detecting::fuzzy_implementation::fuzzy_implementation::FuzzyDetection;
 use whichlicense_detection::detecting::gaoya_implementation::gaoya_implementation::GaoyaDetection;
 
-use crate::rustic::ffm::{c_box, c_string, rustic_normalize, rustic_string, rustic_vec, unsafe_rustic_vec};
+use crate::rustic::ffm::{c_box, c_string, casted_rustic_vec, rustic_normalize, rustic_string, rustic_vec};
 use crate::rustic::pipeline::{PipelineConfig, PipelineLicenseMatches, segment_to_raw_ptr};
 use crate::rustic::repr::{FuzzyHashingConfig, LicenseIndex, GaoyaHashingConfig, LicenseMatchEntry, LicenseMatches};
 
@@ -195,15 +195,15 @@ pub extern "C" fn pipeline_custom_step() -> *mut c_void {
 }*/
 
 #[no_mangle]
-pub extern "C" fn pipeline_batch_steps(steps: *const c_void, length: usize) -> *mut c_void {
-    let steps = unsafe { unsafe_rustic_vec(steps as *const Segment, length) };
+pub extern "C" fn pipeline_batch_steps(steps: *const *const c_void, length: usize) -> *mut c_void {
+    let steps = casted_rustic_vec(steps, length);
     segment_to_raw_ptr(Segment::Batch(steps))
 }
 
 #[inline(always)]
 fn rustic_pipeline_detect_license<'jvm, T: Serialize>(algorithm: &dyn LicenseListActions<T>, pipeline: &'jvm PipelineConfig, license: &str) -> PipelineLicenseMatches {
     println!("4");
-    let steps = unsafe { unsafe_rustic_vec(pipeline.steps as *mut Segment, pipeline.length) };
+    let steps = casted_rustic_vec(pipeline.steps, pipeline.length);
     println!("5");
     let res = Pipeline::new(steps).run(algorithm, license, pipeline.threshold);
 

@@ -10,7 +10,6 @@ import com.whichlicense.metadata.identification.license.pipeline.PipelineStep;
 import com.whichlicense.metadata.identification.license.pipeline.PipelineStep.Batch;
 import com.whichlicense.metadata.identification.license.pipeline.PipelineStep.Remove;
 import com.whichlicense.metadata.identification.license.pipeline.PipelineStep.Replace;
-import com.whichlicense.metadata.identification.license.pipeline.PipelineStepArgument;
 import com.whichlicense.metadata.identification.license.pipeline.PipelineStepArgument.Regex;
 import com.whichlicense.metadata.identification.license.pipeline.PipelineStepArgument.Text;
 
@@ -19,11 +18,12 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
 import static java.lang.foreign.SymbolLookup.loaderLookup;
+import static java.lang.foreign.ValueLayout.ADDRESS;
 import static java.util.Map.entry;
 import static java.util.stream.Collectors.*;
 
@@ -66,6 +66,12 @@ public final class RuntimeHelper {
         }
     }
 
+    public static MemorySegment allocatePointerArray(Arena arena, Iterator<MemorySegment> addresses, long length) {
+        var pointerLayout = ADDRESS.withBitAlignment(64).asUnbounded();
+        var stepPointers = arena.allocateArray(pointerLayout, length);
+        LongStream.range(0, length).forEach(i -> stepPointers.setAtIndex(pointerLayout, i, addresses.next()));
+        return stepPointers;
+    }
 
     public static CNormalizationFn wrapNormalizationFunction(LicenseNormalization normalization, SegmentAllocator allocator) {
         return input -> allocator.allocateUtf8String(normalization.apply(input.getUtf8String(0)));
@@ -97,12 +103,14 @@ public final class RuntimeHelper {
                     consumer.accept(entry("replacement", replacement));
                 }
                 case Batch(var steps) -> {
-                    record PipelineStepImpl(String operation, Map<String, Object> parameters) {}
+                    record PipelineStepImpl(String operation, Map<String, Object> parameters) {
+                    }
                     consumer.accept(entry("steps", steps.stream()
                             .map(nested -> new PipelineStepImpl(describeOperation(nested),
                                     captureOperationParams(nested)))));
                 }
-                default -> {}
+                default -> {
+                }
             }
         }).collect(toMap(Entry::getKey, Entry::getValue, (f, s) -> s));
     }
@@ -134,8 +142,7 @@ public final class RuntimeHelper {
     }
 
     public static Set<LicenseMatch> licenseMatchSetOfAddress(MemorySegment addr, String algorithm, Map<String, Object> parameters, SegmentScope scope) {
-        record LicenseMatchImpl(String license, float confidence, String algorithm,
-                                Map<String, Object> parameters) implements LicenseMatch, Comparable<LicenseMatch> {
+        record LicenseMatchImpl(String license, float confidence, String algorithm, Map<String, Object> parameters) implements LicenseMatch, Comparable<LicenseMatch> {
             @Override
             public int compareTo(LicenseMatch o) {
                 return Float.compare(o.confidence(), this.confidence);

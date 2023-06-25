@@ -16,7 +16,7 @@
 */
 
 pub mod ffm {
-    use std::ffi::{CStr, CString};
+    use std::ffi::{c_void, CStr, CString};
     use std::os::raw::c_char;
     use std::ptr;
     use std::slice;
@@ -58,11 +58,20 @@ pub mod ffm {
     }
 
     #[inline(always)]
-    pub unsafe fn unsafe_rustic_vec<T>(ptr: *const T, size: usize) -> Vec<T> {
-        let mut vec = Vec::with_capacity(size) as Vec<T>;
-        vec.set_len(size);
-        ptr::copy_nonoverlapping(ptr, vec.as_mut_ptr(), size);
-        vec
+    pub fn casted_rustic_vec<T>(ptr: *const *const c_void, size: usize) -> Vec<T> {
+        if size == 0 { return Vec::new(); }
+        unsafe {
+            let slice = slice::from_raw_parts(ptr, size);
+            let mut vec = Vec::with_capacity(size);
+
+            for i in 0..size {
+                let typed_ptr = slice[i] as *const T;
+                let value = ptr::read(typed_ptr);
+                vec.push(value);
+            }
+
+            vec
+        }
     }
 }
 
@@ -115,7 +124,7 @@ pub mod pipeline {
 
     #[repr(C)]
     pub struct PipelineConfig {
-        pub steps: *mut c_void,
+        pub steps: *const *const c_void,
         pub length: usize,
         pub threshold: f32,
     }
