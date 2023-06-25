@@ -17,8 +17,6 @@ import com.whichlicense.metadata.identification.license.pipeline.PipelineStepArg
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 
-import static com.whichlicense.metadata.identification.license.panama.internal.Constants$root.C_POINTER$LAYOUT;
-
 public final class PipelineHelper {
     public static MemorySegment wrapStep(Arena arena, PipelineStep step) {
         return switch (step) {
@@ -45,15 +43,11 @@ public final class PipelineHelper {
                     }
                 };
             }
-            case Custom(var function) -> MemorySegment.NULL;
+            case Custom(var ignored) -> MemorySegment.NULL;
             case Batch(var steps) -> {
-                var array = MemorySegment.allocateNative(C_POINTER$LAYOUT.byteSize() * steps.size(), arena.scope());
-
-                for (var i = 0; i < steps.size(); i++) {
-                    array.set(C_POINTER$LAYOUT, i, wrapStep(arena, steps.get(i)));
-                }
-
-                yield lib_identification_h.pipeline_batch_steps(array, steps.size());
+                var stepPointers = RuntimeHelper.allocatePointerArray(arena, steps.stream()
+                        .map(s -> wrapStep(arena, s)).iterator(), steps.size());
+                yield lib_identification_h.pipeline_batch_steps(stepPointers, steps.size());
             }
         };
     }
