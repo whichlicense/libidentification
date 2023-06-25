@@ -189,11 +189,6 @@ pub extern "C" fn pipeline_replace_regex_step(pattern: *const c_char, replacemen
     ), rustic_string(replacement, "failed to obtain replacement text").to_string()))
 }
 
-/*#[no_mangle]
-pub extern "C" fn pipeline_custom_step() -> *mut c_void {
-    Box::into_raw(Box::new("")) as *mut c_void
-}*/
-
 #[no_mangle]
 pub extern "C" fn pipeline_batch_steps(steps: *const *const c_void, length: usize) -> *mut c_void {
     let steps = casted_rustic_vec(steps, length);
@@ -202,12 +197,9 @@ pub extern "C" fn pipeline_batch_steps(steps: *const *const c_void, length: usiz
 
 #[inline(always)]
 fn rustic_pipeline_detect_license<'jvm, T: Serialize>(algorithm: &dyn LicenseListActions<T>, pipeline: &'jvm PipelineConfig, license: &str) -> PipelineLicenseMatches {
-    println!("4");
     let steps = casted_rustic_vec(pipeline.steps, pipeline.length);
-    println!("5");
     let res = Pipeline::new(steps).run(algorithm, license, pipeline.threshold);
 
-    println!("6");
     let matches = res.iter().map(|ms| {
         LicenseMatches {
             length: ms.len(),
@@ -219,7 +211,7 @@ fn rustic_pipeline_detect_license<'jvm, T: Serialize>(algorithm: &dyn LicenseLis
             }).collect::<Box<[LicenseMatchEntry]>>()),
         }
     }).collect::<Box<[LicenseMatches]>>();
-    println!("7");
+
     PipelineLicenseMatches {
         length: matches.len(),
         step_matches: c_box(matches),
@@ -237,10 +229,7 @@ pub extern "C" fn fuzzy_pipeline_detect_license<'jvm>(config: &'jvm FuzzyHashing
 //TODO add support for custom normalization functions
 #[no_mangle]
 pub extern "C" fn gaoya_pipeline_detect_license<'jvm>(config: &'jvm GaoyaHashingConfig, pipeline: &'jvm PipelineConfig, license: &'jvm c_char) -> PipelineLicenseMatches {
-    println!("1");
     let raw_license = rustic_string(license, "failed to obtain the license text");
-    println!("2");
     let gaoya = configure_gaoya_detection(config, DEFAULT_NORMALIZATION_FN);
-    println!("3");
     rustic_pipeline_detect_license(&gaoya, pipeline, raw_license)
 }
