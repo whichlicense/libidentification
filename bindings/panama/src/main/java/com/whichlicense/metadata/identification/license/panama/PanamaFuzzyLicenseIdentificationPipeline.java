@@ -7,7 +7,7 @@
 package com.whichlicense.metadata.identification.license.panama;
 
 import com.whichlicense.metadata.identification.license.LicenseIdentificationPipeline;
-import com.whichlicense.metadata.identification.license.LicenseIdentificationPipelineStepTrace;
+import com.whichlicense.metadata.identification.license.LicenseIdentificationPipelineTrace;
 import com.whichlicense.metadata.identification.license.panama.internal.FuzzyHashingConfig;
 import com.whichlicense.metadata.identification.license.panama.internal.PipelineConfig;
 import com.whichlicense.metadata.identification.license.panama.internal.RuntimeHelper;
@@ -15,18 +15,23 @@ import com.whichlicense.metadata.identification.license.panama.internal.lib_iden
 import com.whichlicense.metadata.identification.license.pipeline.PipelineStep;
 
 import java.lang.foreign.Arena;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.stream.IntStream;
 
 import static com.whichlicense.metadata.identification.license.internal.HashingAlgorithm.FUZZY;
 import static com.whichlicense.metadata.identification.license.panama.PanamaFuzzyLicenseIdentifier.IndexHolder.FUZZY_INDEX;
 import static com.whichlicense.metadata.identification.license.panama.internal.PipelineHelper.wrapStep;
 import static java.lang.foreign.MemorySegment.NULL;
+import static java.util.Collections.emptySet;
+import static java.util.Map.Entry.comparingByValue;
 
 public class PanamaFuzzyLicenseIdentificationPipeline implements LicenseIdentificationPipeline {
     @Override
-    public List<LicenseIdentificationPipelineStepTrace> identifyLicenses(List<PipelineStep> steps, float threshold, String license) {
+    public LicenseIdentificationPipelineTrace identifyLicenses(String name, List<PipelineStep> steps, float threshold, String license) {
         try (var arena = Arena.openConfined()) {
+            var params = new HashMap<String, Object>();
             var fuzzyConfig = FuzzyHashingConfig.allocate(arena);
             var pipelineConfig = PipelineConfig.allocate(arena);
             var licenseRef = arena.allocateUtf8String(license.strip());
@@ -41,7 +46,19 @@ public class PanamaFuzzyLicenseIdentificationPipeline implements LicenseIdentifi
             PipelineConfig.threshold$set(pipelineConfig, threshold);
 
             var raw_matches = lib_identification_h.fuzzy_pipeline_detect_license(arena, fuzzyConfig, pipelineConfig, licenseRef);
-            return RuntimeHelper.licenseIdentificationPipelineStepTraceSetOfAddress(raw_matches, FUZZY, arena.scope());
+            var traces = RuntimeHelper.licenseIdentificationPipelineStepTraceSetOfAddress(raw_matches, FUZZY, params, steps, arena.scope());
+
+            var licenseName = traces.stream()
+                    .dropWhile(t -> !t.terminated())
+                    .findFirst()
+                    .map(t -> t.matches().entrySet())
+                    .orElse(emptySet())
+                    .stream()
+                    .max(comparingByValue())
+                    .map(Entry::getKey)
+                    .orElse(null);
+
+            return new LicenseIdentificationPipelineTrace(name, licenseName, threshold, FUZZY, params, traces, license);
         }
     }
 

@@ -6,15 +6,26 @@ import com.whichlicense.foreign.ForeignRuntimeHelper;
 import com.whichlicense.metadata.identification.license.LicenseIdentificationPipelineStepTrace;
 import com.whichlicense.metadata.identification.license.LicenseMatch;
 import com.whichlicense.metadata.identification.license.LicenseNormalization;
+import com.whichlicense.metadata.identification.license.pipeline.PipelineStep;
+import com.whichlicense.metadata.identification.license.pipeline.PipelineStep.Batch;
+import com.whichlicense.metadata.identification.license.pipeline.PipelineStep.Remove;
+import com.whichlicense.metadata.identification.license.pipeline.PipelineStep.Replace;
+import com.whichlicense.metadata.identification.license.pipeline.PipelineStepArgument;
+import com.whichlicense.metadata.identification.license.pipeline.PipelineStepArgument.Regex;
+import com.whichlicense.metadata.identification.license.pipeline.PipelineStepArgument.Text;
 
 import java.lang.foreign.*;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.util.*;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static java.lang.foreign.SymbolLookup.loaderLookup;
-import static java.util.stream.Collectors.toCollection;
-import static java.util.stream.Collectors.toUnmodifiableList;
+import static java.util.Map.entry;
+import static java.util.stream.Collectors.*;
 
 public final class RuntimeHelper {
     private static final Linker LINKER = Linker.nativeLinker();
@@ -60,18 +71,64 @@ public final class RuntimeHelper {
         return input -> allocator.allocateUtf8String(normalization.apply(input.getUtf8String(0)));
     }
 
-    public static List<LicenseIdentificationPipelineStepTrace> licenseIdentificationPipelineStepTraceSetOfAddress(MemorySegment addr, String algorithm, SegmentScope scope) {
-        record LicenseIdentificationPipelineStepTraceImpl(long step, Set<LicenseMatch> matches,
-                                                          boolean terminated) implements LicenseIdentificationPipelineStepTrace {
+    private static String describeOperation(PipelineStep step) {
+        return switch (step) {
+            case Remove ignored -> "remove";
+            case Replace ignored -> "replace";
+            case Batch ignored -> "batch";
+            case PipelineStep.Custom ignored -> "custom-function";
+        };
+    }
+
+    private static Map<String, Object> captureOperationParams(PipelineStep step) {
+        return Stream.of(step).<Entry<String, Object>>mapMulti((s, consumer) -> {
+            switch (s) {
+                case Remove(var argument) -> {
+                    switch (argument) {
+                        case Regex(var pattern) -> consumer.accept(entry("pattern", pattern.pattern()));
+                        case Text(var text) -> consumer.accept(entry("text", text));
+                    }
+                }
+                case Replace(var argument, var replacement) -> {
+                    switch (argument) {
+                        case Regex(var pattern) -> consumer.accept(entry("pattern", pattern.pattern()));
+                        case Text(var text) -> consumer.accept(entry("text", text));
+                    }
+                    consumer.accept(entry("replacement", replacement));
+                }
+                case Batch(var steps) -> {
+                    record PipelineStepImpl(String operation, Map<String, Object> parameters) {}
+                    consumer.accept(entry("steps", steps.stream()
+                            .map(nested -> new PipelineStepImpl(describeOperation(nested),
+                                    captureOperationParams(nested)))));
+                }
+                default -> {}
+            }
+        }).collect(toMap(Entry::getKey, Entry::getValue, (f, s) -> s));
+    }
+
+    public static List<LicenseIdentificationPipelineStepTrace> licenseIdentificationPipelineStepTraceSetOfAddress(MemorySegment addr, String algorithm, Map<String, Object> parameters, List<PipelineStep> steps, SegmentScope scope) {
+        record LicenseIdentificationPipelineStepTraceImpl(long step, String operation, Map<String, Object> parameters, Map<String, Float> matches, boolean terminated) implements LicenseIdentificationPipelineStepTrace {
         }
 
-        var matches = PipelineLicenseMatches.ofAddress(addr, scope);
-        var length = PipelineLicenseMatches.length$get(matches);
+        var rawMatches = PipelineLicenseMatches.ofAddress(addr, scope);
+        var rawLength = PipelineLicenseMatches.length$get(rawMatches);
 
-        return LicenseMatches.arrayOfAddress(PipelineLicenseMatches.step_matches$get(matches), length, scope)
+        var matches = LicenseMatches.arrayOfAddress(PipelineLicenseMatches.step_matches$get(rawMatches), rawLength, scope)
                 .elements(LicenseMatches.$LAYOUT())
-                .map(element -> new LicenseIdentificationPipelineStepTraceImpl(
-                        0, licenseMatchSetOfAddress(element, algorithm, Collections.emptyMap(), scope), false
+                .map(e -> licenseMatchSetOfAddress(e, algorithm, parameters, scope))
+                .toList();
+
+        var last = Math.min(steps.size(), matches.size());
+        return IntStream.range(0, last)
+                .mapToObj(i -> new LicenseIdentificationPipelineStepTraceImpl(
+                        i + 1,
+                        describeOperation(steps.get(i)),
+                        captureOperationParams(steps.get(i)),
+                        matches.get(i).stream()
+                                .map(m -> entry(m.license(), m.confidence()))
+                                .collect(toMap(Entry::getKey, Entry::getValue, (f, s) -> s, TreeMap::new)),
+                        i == last - 1
                 ))
                 .collect(toUnmodifiableList());
     }
