@@ -47,7 +47,7 @@ public class PanamaGaoyaLicenseIdentificationPipeline implements LicenseIdentifi
             PipelineConfig.threshold$set(pipelineConfig, threshold);
 
             var raw_matches = lib_identification_h.gaoya_pipeline_detect_license(arena, gaoyaConfig, pipelineConfig, licenseRef);
-            var traces = RuntimeHelper.licenseIdentificationPipelineStepTraceSetOfAddress(raw_matches, GAOYA, params, steps, arena.scope());
+            var traces = RuntimeHelper.licenseIdentificationPipelineStepTraceSetOfAddress(raw_matches, GAOYA, threshold, params, steps, arena.scope());
 
             var licenseName = traces.stream()
                     .dropWhile(t -> !t.terminated())
@@ -59,7 +59,17 @@ public class PanamaGaoyaLicenseIdentificationPipeline implements LicenseIdentifi
                     .map(Entry::getKey)
                     .orElse(null);
 
-            return new LicenseIdentificationPipelineTrace(name, licenseName, threshold, GAOYA, params, traces, license);
+            var confidence = traces.stream()
+                    .dropWhile(t -> !t.terminated())
+                    .findFirst()
+                    .map(t -> t.matches().entrySet())
+                    .orElse(emptySet())
+                    .stream()
+                    .max(comparingByValue())
+                    .map(Entry::getValue)
+                    .orElse(0f);
+
+            return new LicenseIdentificationPipelineTrace(name, licenseName, confidence, GAOYA, params, traces, license);
         }
     }
 

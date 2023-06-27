@@ -115,7 +115,7 @@ public final class RuntimeHelper {
         }).collect(toMap(Entry::getKey, Entry::getValue, (f, s) -> s));
     }
 
-    public static List<LicenseIdentificationPipelineStepTrace> licenseIdentificationPipelineStepTraceSetOfAddress(MemorySegment addr, String algorithm, Map<String, Object> parameters, List<PipelineStep> steps, SegmentScope scope) {
+    public static List<LicenseIdentificationPipelineStepTrace> licenseIdentificationPipelineStepTraceSetOfAddress(MemorySegment addr, String algorithm, float threshold, Map<String, Object> parameters, List<PipelineStep> steps, SegmentScope scope) {
         record LicenseIdentificationPipelineStepTraceImpl(long step, String operation, Map<String, Object> parameters, Map<String, Float> matches, boolean terminated) implements LicenseIdentificationPipelineStepTrace {
         }
 
@@ -127,18 +127,22 @@ public final class RuntimeHelper {
                 .map(e -> licenseMatchSetOfAddress(e, algorithm, parameters, scope))
                 .toList();
 
-        var last = Math.min(steps.size(), matches.size());
-        return IntStream.range(0, last)
-                .mapToObj(i -> new LicenseIdentificationPipelineStepTraceImpl(
-                        i + 1,
-                        describeOperation(steps.get(i)),
-                        captureOperationParams(steps.get(i)),
-                        matches.get(i).stream()
-                                .map(m -> entry(m.license(), m.confidence()))
-                                .collect(toMap(Entry::getKey, Entry::getValue, (f, s) -> s, TreeMap::new)),
-                        i == last - 1
-                ))
+        return IntStream.range(0, steps.size() + 1)
+                .mapToObj(i -> {
+                    var matchMap = i < matches.size() ? matches.get(i).stream()
+                            .map(m -> entry(m.license(), m.confidence()))
+                            .collect(toMap(Entry::getKey, Entry::getValue, (f, s) -> s, TreeMap::new))
+                            : Collections.<String, Float>emptyMap();
+                    return new LicenseIdentificationPipelineStepTraceImpl(
+                            i,
+                            i != 0 ? describeOperation(steps.get(i - 1)) : algorithm + "-identification",
+                            i != 0 ? captureOperationParams(steps.get(i - 1)) : parameters,
+                            matchMap,
+                            matchMap.values().stream().anyMatch(c -> c >= threshold)
+                    );
+                })
                 .collect(toUnmodifiableList());
+
     }
 
     public static Set<LicenseMatch> licenseMatchSetOfAddress(MemorySegment addr, String algorithm, Map<String, Object> parameters, SegmentScope scope) {
