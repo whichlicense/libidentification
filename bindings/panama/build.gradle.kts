@@ -11,7 +11,7 @@ plugins {
 }
 
 group = "com.whichlicense.identification"
-version = "0.8.9-SNAPSHOT"
+version = "0.8.10-SNAPSHOT"
 
 java {
     toolchain {
@@ -34,7 +34,7 @@ configurations.all {
 
 dependencies {
     api("com.whichlicense:foreign:0.7.6-SNAPSHOT")
-    api("com.whichlicense:identification:0.8.7-SNAPSHOT")
+    api("com.whichlicense:identification:0.8.10-SNAPSHOT")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.3")
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.9.3")
     testImplementation("org.assertj:assertj-core:3.24.2")

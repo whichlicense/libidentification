@@ -22,7 +22,7 @@ public final class PipelineHelper {
         return switch (step) {
             case Remove(var argument) -> switch (argument) {
                 case Regex(var pattern) -> {
-                    var regex = arena.allocateUtf8String(pattern.pattern());
+                    var regex = arena.allocateUtf8String(pattern);
                     yield lib_identification_h.pipeline_remove_regex_step(regex);
                 }
                 case Text(var string) -> {
@@ -34,7 +34,7 @@ public final class PipelineHelper {
                 var next = arena.allocateUtf8String(replacement);
                 yield switch (target) {
                     case Regex(var pattern) -> {
-                        var regex = arena.allocateUtf8String(pattern.pattern());
+                        var regex = arena.allocateUtf8String(pattern);
                         yield lib_identification_h.pipeline_replace_regex_step(regex, next);
                     }
                     case Text(var string) -> {

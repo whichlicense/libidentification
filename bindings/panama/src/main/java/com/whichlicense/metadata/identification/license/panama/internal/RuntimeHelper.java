@@ -91,13 +91,13 @@ public final class RuntimeHelper {
             switch (s) {
                 case Remove(var argument) -> {
                     switch (argument) {
-                        case Regex(var pattern) -> consumer.accept(entry("pattern", pattern.pattern()));
+                        case Regex(var pattern) -> consumer.accept(entry("pattern", pattern));
                         case Text(var text) -> consumer.accept(entry("text", text));
                     }
                 }
                 case Replace(var argument, var replacement) -> {
                     switch (argument) {
-                        case Regex(var pattern) -> consumer.accept(entry("pattern", pattern.pattern()));
+                        case Regex(var pattern) -> consumer.accept(entry("pattern", pattern));
                         case Text(var text) -> consumer.accept(entry("text", text));
                     }
                     consumer.accept(entry("replacement", replacement));

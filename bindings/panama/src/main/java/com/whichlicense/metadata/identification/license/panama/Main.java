@@ -11,10 +11,9 @@ import com.whichlicense.metadata.identification.license.LicenseIdentificationPip
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import java.util.regex.Pattern;
 
 import static com.whichlicense.metadata.identification.license.internal.HashingAlgorithm.GAOYA;
-import static com.whichlicense.metadata.identification.license.pipeline.PipelineStep.remove;
+import static com.whichlicense.metadata.identification.license.pipeline.PipelineStep.removePattern;
 
 public class Main {
     public static void main(String[] args) {
@@ -23,8 +22,8 @@ public class Main {
         //var identifier = new PanamaFuzzyLicenseHasher();
         //identifier.forceLoadIndex();
         var before = Instant.now();
-        var pattern = Pattern.compile("[0-9]");
-        var result = pipeline.identifyLicenses("p1", List.of(remove(pattern), remove(pattern)), """
+        var pattern = "/0-9/g";
+        var result = pipeline.identifyLicenses("p1", List.of(removePattern(pattern), removePattern(pattern)), """
                 Copyright <YEAR> <COPYRIGHT HOLDER>
                                 
                 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
@@ -35,7 +34,7 @@ public class Main {
                 """);
         var after = Instant.now();
 
-        result = LicenseIdentificationPipeline.identifyLicenses("p2", GAOYA, List.of(remove(pattern), remove(pattern)), """
+        result = LicenseIdentificationPipeline.identifyLicenses("p2", GAOYA, List.of(removePattern(pattern), removePattern(pattern)), """
                 Copyright <YEAR> <COPYRIGHT HOLDER>
                                 
                 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
