@@ -36,7 +36,7 @@ dependencies {
     api("com.whichlicense:foreign:0.7.6-SNAPSHOT")
     api("com.whichlicense:identification:0.8.10-SNAPSHOT")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.3")
-    testImplementation("org.junit.jupiter:junit-jupiter-params:5.9.3")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.10.0")
     testImplementation("org.assertj:assertj-core:3.24.2")
     testImplementation("com.whichlicense.testing:naming:0.7.6-SNAPSHOT")
     testImplementation("com.whichlicense.testing:filecontent:0.7.6-SNAPSHOT")
