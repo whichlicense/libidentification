@@ -32,7 +32,7 @@ jobs:
       run:
         working-directory: library/panama
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Build lib on ${{ matrix.os }}
         run: cargo build --profile release-lto
       - name: Rename linux lib
@@ -65,7 +65,7 @@ jobs:
       run:
         working-directory: library/wasm
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install wasm-pack
         run: cargo install wasm-pack
       - name: Build wasm binary
